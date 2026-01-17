@@ -1,16 +1,27 @@
 """Authentication routes for Google OAuth and Email/Password login."""
+import random
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.email import send_verification_email
 from app.core.oauth import oauth
 from app.core.security import hash_password, verify_password
 from app.db import get_db
-from app.models import User
-from app.schemas import AuthResponse, ErrorResponse, UserCreate, UserLogin, UserProfile
+from app.models import User, VerificationCode
+from app.schemas import (
+    AuthResponse,
+    ErrorResponse,
+    SendCodeRequest,
+    SendCodeResponse,
+    UserCreate,
+    UserLogin,
+    UserProfile,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 settings = get_settings()
@@ -148,8 +159,73 @@ async def google_callback(
 
 
 # ============================================================================
-# US-003: Email Registration
+# US-003: Email Registration with Verification Code
 # ============================================================================
+
+
+@router.post(
+    "/send-code",
+    response_model=SendCodeResponse,
+    responses={400: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+)
+async def send_verification_code(
+    payload: SendCodeRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    """Send a verification code to the email address.
+
+    POST /api/auth/send-code
+    Body: {email}
+
+    - Checks rate limit (same email cannot request within 60 seconds)
+    - Generates a 6-digit random code
+    - Stores code in database with 5-minute expiry
+    - Sends email via Resend (background task)
+    """
+    email = payload.email
+    now = datetime.now(timezone.utc)
+
+    # Check rate limit: cannot send again within VERIFICATION_CODE_RATE_LIMIT_SECONDS
+    result = await db.execute(
+        select(VerificationCode)
+        .where(VerificationCode.email == email)
+        .where(VerificationCode.created_at > now - timedelta(seconds=settings.VERIFICATION_CODE_RATE_LIMIT_SECONDS))
+    )
+    recent_code = result.scalar_one_or_none()
+
+    if recent_code:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="请求太频繁，请稍后再试",
+        )
+
+    # Delete any existing codes for this email
+    existing_codes = await db.execute(
+        select(VerificationCode).where(VerificationCode.email == email)
+    )
+    for code in existing_codes.scalars():
+        await db.delete(code)
+
+    # Generate 6-digit code
+    code = str(random.randint(100000, 999999))
+
+    # Calculate expiry time
+    expires_at = now + timedelta(minutes=settings.VERIFICATION_CODE_EXPIRE_MINUTES)
+
+    # Store in database
+    verification = VerificationCode(
+        email=email,
+        code=code,
+        expires_at=expires_at,
+    )
+    db.add(verification)
+    await db.commit()
+
+    # Send email in background task
+    background_tasks.add_task(send_verification_email, email, code)
+
+    return SendCodeResponse(message="验证码已发送，请查收邮箱")
 
 
 @router.post(
@@ -163,16 +239,34 @@ async def register(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-    """Register a new user with email and password.
+    """Register a new user with email, password, and verification code.
 
     POST /api/auth/register
-    Body: {email, password}
+    Body: {email, password, code}
 
     - Validates email format (via Pydantic)
+    - Validates verification code matches and is not expired
     - Checks if email already exists -> returns 400 error
     - Hashes password before storing
     - Automatically logs user in (sets session) upon success
     """
+    now = datetime.now(timezone.utc)
+
+    # Verify the code
+    result = await db.execute(
+        select(VerificationCode)
+        .where(VerificationCode.email == user_data.email)
+        .where(VerificationCode.code == user_data.code)
+        .where(VerificationCode.expires_at > now)
+    )
+    verification = result.scalar_one_or_none()
+
+    if not verification:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="验证码错误或已过期",
+        )
+
     # Check if email already exists
     result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
@@ -182,6 +276,9 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
+
+    # Delete the used verification code
+    await db.delete(verification)
 
     # Create new user with hashed password
     user = User(

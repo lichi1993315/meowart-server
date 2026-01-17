@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_REDIRECT_URI: str = "https://api.meowart.ai/api/auth/google/callback"
 
+    # Email (Resend)
+    RESEND_API_KEY: Optional[str] = None
+    RESEND_FROM_EMAIL: str = "jesse.li@meowart.ai"
+    VERIFICATION_CODE_EXPIRE_MINUTES: int = 5
+    VERIFICATION_CODE_RATE_LIMIT_SECONDS: int = 60
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -2,6 +2,8 @@
 from app.schemas.user import (
     AuthResponse,
     ErrorResponse,
+    SendCodeRequest,
+    SendCodeResponse,
     UserCreate,
     UserLogin,
     UserProfile,
@@ -15,4 +17,6 @@ __all__ = [
     "UserProfile",
     "AuthResponse",
     "ErrorResponse",
+    "SendCodeRequest",
+    "SendCodeResponse",
 ]

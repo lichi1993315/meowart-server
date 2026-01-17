@@ -11,10 +11,23 @@ class UserBase(BaseModel):
     email: EmailStr
 
 
+class SendCodeRequest(BaseModel):
+    """Schema for sending verification code request."""
+
+    email: EmailStr
+
+
+class SendCodeResponse(BaseModel):
+    """Schema for sending verification code response."""
+
+    message: str
+
+
 class UserCreate(UserBase):
-    """Schema for user registration with email/password."""
+    """Schema for user registration with email/password and verification code."""
 
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
+    code: str = Field(..., min_length=6, max_length=6, description="6-digit verification code")
 
 
 class UserLogin(UserBase):
