@@ -1,0 +1,25 @@
+# Caddyfile for api.meowart.ai
+# Caddy automatically handles HTTPS/SSL certificate provisioning via Let's Encrypt
+
+api.meowart.ai {
+    # Reverse proxy to FastAPI backend
+    reverse_proxy localhost:9901
+
+    # Enable gzip compression
+    encode gzip
+
+    # Logging
+    log {
+        output file /var/log/caddy/api.meowart.ai.access.log
+        format json
+    }
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+}

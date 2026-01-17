@@ -1,0 +1,1 @@
+"""Meowart API application."""

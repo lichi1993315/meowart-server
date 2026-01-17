@@ -1,7 +1,15 @@
-"# PRD: Hybrid Authentication System (Subdomain Architecture)
+---
+active: true
+iteration: 1
+max_iterations: 30
+completion_promise: "COMPLETE"
+started_at: "2026-01-17T15:53:57Z"
+---
+
+# PRD: Hybrid Authentication System (Subdomain Architecture)
 
 ## Introduction
-Implement a robust, production-ready FastAPI Server with a hybrid authentication system for Meowart.ai. This system supports a "Hybrid" model allowing users to log in via **Google OAuth** (for low friction) or **Email/Password** (traditional).
+Implement a robust, production-ready FastAPI Server with a hybrid authentication system for Meowart.ai. This system supports a Hybrid model allowing users to log in via **Google OAuth** (for low friction) or **Email/Password** (traditional).
 
 The architecture uses **Subdomain Separation**:
 - **Frontend:** 'https://meowart.ai'
@@ -28,7 +36,7 @@ Crucially, the system handles **Automatic Registration & Merging**: if a user lo
 - [ ] Database migration script created and executed successfully.
 
 ### US-002: Google Login (Redirect & Callback)
-**Description:** As a user, I want to click "Sign in with Google" to log in without remembering a password.
+**Description:** As a user, I want to click Sign in with Google to log in without remembering a password.
 
 **Acceptance Criteria:**
 - [ ] **Endpoint:** 'GET /api/auth/google/login' redirects user to Google's consent screen.
@@ -37,7 +45,7 @@ Crucially, the system handles **Automatic Registration & Merging**: if a user lo
     - If Google email does **not** exist in DB -> Create new user -> Set Session.
     - If Google email **exists** in DB -> Update user record with 'google_id' -> Set Session.
 - [ ] **Redirect:** After success, redirect browser to 'https://meowart.ai/'.
-- [ ] **Cookie:** Session cookie must have 'domain=".meowart.ai"' so frontend can read it.
+- [ ] **Cookie:** Session cookie must have 'domain=.meowart.ai' so frontend can read it.
 
 ### US-003: Email Registration
 **Description:** As a user, I want to create an account using my email and a password if I don't use Google.
@@ -55,10 +63,10 @@ Crucially, the system handles **Automatic Registration & Merging**: if a user lo
 **Acceptance Criteria:**
 - [ ] **Endpoint:** 'POST /api/auth/login' accepts JSON '{email, password}'.
 - [ ] Finds user by email -> verifies password hash.
-- [ ] If valid -> Sets session cookie ('domain=".meowart.ai"').
+- [ ] If valid -> Sets session cookie ('domain=.meowart.ai').
 - [ ] If invalid -> Returns 401 error.
 
-### US-005: "Who Am I" (Session Check)
+### US-005: Who Am I (Session Check)
 **Description:** As the frontend application, I need to know the current user's state to update the UI.
 
 **Acceptance Criteria:**
@@ -79,10 +87,10 @@ Crucially, the system handles **Automatic Registration & Merging**: if a user lo
 
 1.  **CORS Configuration:** Backend MUST allow 'https://meowart.ai' with 'allow_credentials=True'.
 2.  **Cookie Configuration:**
-    - 'key': "session_id" (or similar)
-    - 'domain': **".meowart.ai"** (Critical for subdomain separation)
+    - 'key': session_id (or similar)
+    - 'domain': **.meowart.ai** (Critical for subdomain separation)
     - 'httponly': True
-    - 'samesite': "lax"
+    - 'samesite': lax
     - 'secure': True (Production only/HTTPS)
 3.  **Google OAuth Config:**
     - 'redirect_uri' sent to Google MUST be 'https://api.meowart.ai/api/auth/google/callback'.
@@ -91,7 +99,7 @@ Crucially, the system handles **Automatic Registration & Merging**: if a user lo
     - Invalid login -> 401 Unauthorized.
 
 ## Non-Goals
-- **Email Verification:** No "Click link to verify email" flow for MVP.
+- **Email Verification:** No Click link to verify email flow for MVP.
 - **Forgot Password:** Password reset flow is out of scope for this sprint.
 - **Username Management:** Users will be identified by Email/Name from Google for now.
 
@@ -100,7 +108,7 @@ Crucially, the system handles **Automatic Registration & Merging**: if a user lo
 ### Subdomain Separation Challenges
 Since Frontend ('meowart.ai') and Backend ('api.meowart.ai') are different origins:
 1.  **HTTPS is Mandatory:** Both domains must have valid SSL certs for 'Secure' cookies to work properly in modern browsers.
-2.  **Cookie Domain:** The backend middleware *must* explicitly set 'domain=".meowart.ai"'. If this is missed, the frontend cannot detect the login state.
+2.  **Cookie Domain:** The backend middleware *must* explicitly set 'domain=.meowart.ai'. If this is missed, the frontend cannot detect the login state.
 
 ### Tech Stack
 - **Framework:** FastAPI
@@ -113,4 +121,4 @@ Since Frontend ('meowart.ai') and Backend ('api.meowart.ai') are different origi
 - Frontend can successfully retrieve user data via '/me' after a redirect from Google.
 
 ## Finally
-Output <promise>COMPLETE</promise> when all phases done."
+Output <promise>COMPLETE</promise> when all phases done.
