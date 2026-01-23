@@ -49,3 +49,5 @@ htmlcov/
 # Local development
 *.db
 *.sqlite3
+*.log
+*.pid

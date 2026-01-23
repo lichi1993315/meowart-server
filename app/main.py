@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.image import router as image_router
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -19,23 +20,17 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # ========================================================================
-    # Session Middleware
-    # Required for OAuth state management and can be used for session storage
-    # ========================================================================
+    # Session middleware for OAuth state management
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.SECRET_KEY,
-        session_cookie=f"{settings.SESSION_COOKIE_NAME}_state",  # Separate from auth cookie
+        session_cookie=f"{settings.SESSION_COOKIE_NAME}_state",
         max_age=settings.SESSION_MAX_AGE,
         same_site=settings.SESSION_COOKIE_SAMESITE,
         https_only=settings.SESSION_COOKIE_SECURE,
     )
 
-    # ========================================================================
-    # CORS Middleware Configuration
-    # Critical for cross-subdomain communication (meowart.ai <-> api.meowart.ai)
-    # ========================================================================
+    # CORS middleware for cross-subdomain communication
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -52,14 +47,15 @@ def create_app() -> FastAPI:
 
     # Register routers
     app.include_router(auth_router)
+    app.include_router(image_router)
 
     @app.get("/health")
-    async def health_check():
+    async def health_check() -> dict[str, str]:
         """Health check endpoint."""
         return {"status": "healthy"}
 
     @app.get("/")
-    async def root():
+    async def root() -> dict[str, str]:
         """Root endpoint."""
         return {
             "message": "Welcome to Meowart API",
