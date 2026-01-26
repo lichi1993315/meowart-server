@@ -86,8 +86,11 @@ def pixelate_pil(
             out_y2 = (y + 1) * block_h
             result_array[out_y1:out_y2, out_x1:out_x2] = final_color
     
-    # 裁剪回原始尺寸
-    result_array = result_array[:height, :width]
+    # 裁剪回原始尺寸 
+    # todo: 增加参数：resize_to_original
+    resize_to_original = False
+    if resize_to_original:
+        result_array = result_array[:height, :width]
     
     return Image.fromarray(result_array, 'RGBA')
 

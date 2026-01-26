@@ -29,8 +29,14 @@ nohup uvicorn app.main:app --host 0.0.0.0 --port $PORT > "$LOG_FILE" 2>&1 &
 # Save PID
 echo $! > "$PID_FILE"
 
-# Wait a moment and check if started successfully
-sleep 2
+# Wait for server to start (up to 10 seconds)
+echo "⏳ Waiting for server to start..."
+for i in {1..10}; do
+    if lsof -i :$PORT -t > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
 
 if lsof -i :$PORT -t > /dev/null 2>&1; then
     echo "✅ Server started successfully!"

@@ -45,6 +45,16 @@ def create_app() -> FastAPI:
         expose_headers=["*"],
     )
 
+    # 注意：临时测试版本打开了cors。上线时需要注释掉
+    # app.add_middleware(
+    #     CORSMiddleware,
+    #     allow_origins=["*"],  # Allow all origins for development testing
+    #     allow_credentials=False,  # Must be False when allow_origins is "*"
+    #     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    #     allow_headers=["*"],
+    #     expose_headers=["*"],
+    # )
+
     # Register routers
     app.include_router(auth_router)
     app.include_router(image_router)

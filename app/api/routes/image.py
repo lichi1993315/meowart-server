@@ -73,7 +73,7 @@ async def remove_background_api(
 @router.post("/pixelate")
 async def pixelate_api(
     file: UploadFile = File(..., description="上传的图片文件"),
-    block_size: int = Form(8, description="像素块大小 (正方形)"),
+    block_size: int = Form(4, description="像素块大小 (正方形)"),
     alpha_threshold: int = Form(128, description="Alpha 阈值 (0-255)"),
 ) -> Response:
     """
