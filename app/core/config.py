@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     VERIFICATION_CODE_EXPIRE_MINUTES: int = 5
     VERIFICATION_CODE_RATE_LIMIT_SECONDS: int = 60
 
+    # Gemini API
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta/openai"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

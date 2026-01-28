@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.gemini import router as gemini_router
 from app.api.routes.image import router as image_router
 from app.core.config import get_settings
 
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
 
     # Register routers
     app.include_router(auth_router)
+    app.include_router(gemini_router)
     app.include_router(image_router)
 
     @app.get("/health")
